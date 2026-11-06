@@ -1,3 +1,8 @@
+/**
+ * @file Settlement: turning a payment result into a subscription change. Pure decisions only;
+ * the API layer does the reading and writing.
+ */
+
 import { Period, periodForPayment } from './cycle';
 import { DEFAULT_RETRY_SCHEDULE_DAYS, nextDunningAction } from './dunning';
 import { StopKind } from './lifecycle';
@@ -26,6 +31,7 @@ export interface SubscriptionPatch {
   pendingStop: StopKind | null;
 }
 
+/** Why a payment was written to the ledger without changing the subscription. */
 export type RecordOnlyReason =
   /** Money moved for a subscription that is already canceled: the ledger records it, coverage is not granted. */
   | 'subscription_canceled'

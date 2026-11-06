@@ -1,7 +1,14 @@
+/**
+ * @file Billing cycle arithmetic. A cycle is a fixed number of days anchored to the moment a
+ * payment cleared, never to a calendar date, so the same rules hold in every month, leap year
+ * and timezone.
+ */
+
 import { InvalidArgumentError } from './errors';
 
 const MS_PER_DAY = 86_400_000;
 
+/** A span of paid coverage: it starts at `start` and runs until `end`. */
 export interface Period {
   start: Date;
   end: Date;

@@ -1,5 +1,5 @@
 /**
- * Idempotency keys. They are derived from what is being paid for, never from
+ * @file Idempotency key derivation. Keys are derived from what is being paid for, never from
  * a clock or a random value, so a retry of the same operation always produces
  * the same key and the provider replays instead of repeating.
  */

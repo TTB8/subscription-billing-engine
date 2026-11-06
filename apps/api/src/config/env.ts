@@ -1,3 +1,8 @@
+/**
+ * @file Environment configuration, validated once at boot. A missing or invalid setting stops
+ * the server immediately with a clear message; Stripe live keys are refused outright.
+ */
+
 import { z } from 'zod';
 
 const TEST_KEY = /^(sk|rk)_test_/;
@@ -34,6 +39,7 @@ const schema = z
     }
   });
 
+/** The validated, typed configuration the rest of the app reads. */
 export interface AppConfig {
   nodeEnv: 'development' | 'test' | 'production';
   port: number;
@@ -47,6 +53,10 @@ export interface AppConfig {
   renewalJobEnabled: boolean;
 }
 
+/**
+ * The environment is invalid. The message lists every problem at once, without echoing any
+ * secret value.
+ */
 export class ConfigError extends Error {
   constructor(issues: string[]) {
     super(`Invalid environment configuration:\n${issues.map((i) => `  - ${i}`).join('\n')}`);
@@ -54,6 +64,7 @@ export class ConfigError extends Error {
   }
 }
 
+/** Injection token for the validated AppConfig. */
 export const APP_CONFIG = Symbol('APP_CONFIG');
 
 /** Validates the environment once, at boot. Empty values count as unset. */

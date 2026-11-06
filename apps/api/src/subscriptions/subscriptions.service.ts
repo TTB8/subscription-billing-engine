@@ -1,3 +1,8 @@
+/**
+ * @file Subscription lifecycle logic: checkout pricing and pause/cancel timing, using the
+ * domain rules.
+ */
+
 import { randomUUID } from 'node:crypto';
 import {
   BadRequestException,
@@ -32,6 +37,10 @@ function toView(sub: SubscriptionWithPlan): SubscriptionView {
   };
 }
 
+/**
+ * Starts, reads, pauses and cancels subscriptions. Writes use an optimistic lock, so concurrent
+ * changes cannot silently overwrite each other.
+ */
 @Injectable()
 export class SubscriptionsService {
   constructor(

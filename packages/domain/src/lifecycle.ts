@@ -1,8 +1,15 @@
+/**
+ * @file Pause and cancel timing, and the renewal job's decision about what to do with a
+ * subscription right now.
+ */
+
 import { InvalidTransitionError } from './errors';
 import { SubscriptionStatus } from './state-machine';
 
+/** A request to stop billing: pause (the customer may come back) or cancel (final). */
 export type StopKind = 'pause' | 'cancel';
 
+/** When a stop request takes effect: immediately, or when the paid cycle ends. */
 export type StopResolution =
   { effect: 'immediate' } | { effect: 'at_period_end'; effectiveAt: Date };
 
@@ -45,6 +52,10 @@ export function resolveStop(input: {
     : { effect: 'immediate' };
 }
 
+/**
+ * What the renewal job does with one subscription: nothing yet, charge it, or apply a scheduled
+ * stop.
+ */
 export type RenewalDecision = 'not_due' | 'charge' | 'pause' | 'cancel';
 
 /**

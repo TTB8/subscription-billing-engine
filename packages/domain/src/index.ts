@@ -1,3 +1,8 @@
+/**
+ * @file Public API of the billing domain package. Everything exported here is pure: no
+ * framework, database or payment-provider imports.
+ */
+
 export * from './errors';
 export * from './money';
 export * from './pricing';

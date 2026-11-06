@@ -1,3 +1,7 @@
+/**
+ * @file Refunds and ledger reads.
+ */
+
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Payment } from '@prisma/client';
 import { refundIdempotencyKey, resolveRefund, summarizeLedger } from '@billing/domain';
@@ -21,6 +25,10 @@ function toEntry(p: Payment): LedgerEntryView {
   };
 }
 
+/**
+ * Refunds charges and reads ledgers. A refund locks its charge for the duration, so concurrent
+ * refunds cannot over-refund.
+ */
 @Injectable()
 export class PaymentsService {
   constructor(

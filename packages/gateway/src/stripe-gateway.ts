@@ -1,3 +1,9 @@
+/**
+ * @file PaymentGateway backed by Stripe. Maps Stripe's API and webhook events onto the
+ * provider-neutral contract, and sorts Stripe errors into a declined card, an unknown outcome,
+ * or a rejected request.
+ */
+
 import Stripe from 'stripe';
 import { GatewayError, GatewayUnavailableError, InvalidSignatureError } from './errors';
 import {
@@ -11,6 +17,7 @@ import {
   RefundResult,
 } from './types';
 
+/** Settings for StripeGateway. Use a test-mode secret key. */
 export interface StripeGatewayOptions {
   secretKey: string;
   webhookSecret: string;
@@ -41,6 +48,10 @@ function toStripeMetadata(metadata: PaymentMetadata): Record<string, string> {
   };
 }
 
+/**
+ * Production payment gateway using the Stripe API. Every mutating call carries an idempotency
+ * key.
+ */
 export class StripeGateway implements PaymentGateway {
   private readonly stripe: Stripe;
   private readonly webhookSecret: string;

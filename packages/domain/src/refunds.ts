@@ -1,3 +1,7 @@
+/**
+ * @file Refund rules: how much a refund request refunds, and when it must be refused.
+ */
+
 import { InvalidArgumentError, RefundError } from './errors';
 import { assertCents, Cents } from './money';
 

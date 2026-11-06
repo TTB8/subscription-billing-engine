@@ -1,3 +1,7 @@
+/**
+ * @file Protection for admin endpoints.
+ */
+
 import { timingSafeEqual } from 'node:crypto';
 import {
   CanActivate,

@@ -1,8 +1,13 @@
+/**
+ * @file Admin route to run the renewal job on demand.
+ */
+
 import { Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { AdminKeyGuard } from '../common/admin-key.guard';
 import { RenewalSummary, RenewalsService } from './renewals.service';
 
+/** Runs the renewal job now. Requires the admin key. */
 @ApiTags('renewals')
 @Controller('admin/renewals')
 @UseGuards(AdminKeyGuard)

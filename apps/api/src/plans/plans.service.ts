@@ -1,3 +1,7 @@
+/**
+ * @file Plan catalogue logic: creating plans and presenting their priced options.
+ */
+
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { Plan, PlanTerm, Prisma } from '@prisma/client';
 import { priceTerm, termLabel } from '@billing/domain';
@@ -6,6 +10,10 @@ import { CreatePlanDto, PlanView } from './plans.dto';
 
 type PlanWithTerms = Plan & { terms: PlanTerm[] };
 
+/**
+ * Presents a plan with its single-cycle option first and every prepaid term priced by the
+ * domain rules.
+ */
 export function toPlanView(plan: PlanWithTerms): PlanView {
   const options = [
     { cycles: 1, discountBps: 0 },
@@ -26,6 +34,7 @@ export function toPlanView(plan: PlanWithTerms): PlanView {
   };
 }
 
+/** Creates and lists plans. */
 @Injectable()
 export class PlansService {
   constructor(private readonly prisma: PrismaService) {}

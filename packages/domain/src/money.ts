@@ -1,8 +1,16 @@
+/**
+ * @file Money as integer minor units. Floating point never touches an amount, so totals and
+ * discounts are exact.
+ */
+
 import { InvalidArgumentError } from './errors';
 
 /** Money is always an integer number of minor units (cents). Never a float. */
 export type Cents = number;
 
+/**
+ * Throws unless `value` is a non-negative safe integer number of cents. Also narrows the type.
+ */
 export function assertCents(value: number, label = 'amount'): asserts value is Cents {
   if (!Number.isSafeInteger(value)) {
     throw new InvalidArgumentError(`${label} must be an integer number of minor units`);
@@ -12,6 +20,7 @@ export function assertCents(value: number, label = 'amount'): asserts value is C
   }
 }
 
+/** Basis points in a whole: 10,000 bps is 100%. */
 export const BPS_DENOMINATOR = 10_000;
 
 /**

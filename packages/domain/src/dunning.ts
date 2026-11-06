@@ -1,11 +1,18 @@
+/**
+ * @file Dunning: what happens after a renewal charge fails. A fixed retry schedule, measured
+ * from the original due date, ends in cancellation once it is used up.
+ */
+
 import { InvalidArgumentError } from './errors';
 import { addDays } from './cycle';
 
 /** Retry offsets in days after the original due date: +1, +3, +7. */
 export const DEFAULT_RETRY_SCHEDULE_DAYS: readonly number[] = [1, 3, 7];
 
+/** The next step after a failed charge: retry at a given time, or give up and cancel. */
 export type DunningAction = { type: 'retry'; at: Date; retryNumber: number } | { type: 'cancel' };
 
+/** Rejects a retry schedule that is not strictly increasing, positive whole days. */
 export function assertRetrySchedule(schedule: readonly number[]): void {
   let previous = 0;
   for (const days of schedule) {
@@ -46,6 +53,7 @@ export function nextDunningAction(input: {
   return { type: 'retry', at: addDays(dueAt, offset), retryNumber: failureCount };
 }
 
+/** Whether a scheduled retry time has arrived. A retry is due at its exact time and after. */
 export function isRetryDue(nextRetryAt: Date, now: Date): boolean {
   return now >= nextRetryAt;
 }

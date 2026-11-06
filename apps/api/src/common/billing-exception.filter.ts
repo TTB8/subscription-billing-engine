@@ -1,3 +1,8 @@
+/**
+ * @file Translates domain and payment provider errors into HTTP responses in one place, so
+ * controllers and services can simply throw.
+ */
+
 import { ArgumentsHost, Catch, ExceptionFilter, Logger } from '@nestjs/common';
 import {
   DomainError,

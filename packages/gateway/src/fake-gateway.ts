@@ -1,3 +1,9 @@
+/**
+ * @file In-memory payment provider for tests. It reproduces the provider behaviour billing code
+ * depends on (idempotent replays, declines as results, signed webhooks) so the whole lifecycle
+ * can be tested without a network.
+ */
+
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { GatewayError, GatewayUnavailableError, InvalidSignatureError } from './errors';
 import {
@@ -14,11 +20,16 @@ import {
 /** What a payment method does on its next charge. */
 export type Outcome = 'ok' | { decline: string };
 
+/** Options for constructing a FakeGateway. */
 export interface FakeGatewayOptions {
   webhookSecret?: string;
   now?: () => Date;
 }
 
+/**
+ * A charge as the fake provider recorded it, exposed so tests can assert on what was really
+ * charged.
+ */
 export interface FakeCharge {
   gatewayRef: string;
   customerRef: string;

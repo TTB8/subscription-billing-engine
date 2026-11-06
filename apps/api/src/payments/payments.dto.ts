@@ -1,5 +1,10 @@
+/**
+ * @file Request and response shapes for refunds and the ledger.
+ */
+
 import { IsInt, IsOptional, Min } from 'class-validator';
 
+/** Body of a refund request. */
 export class RefundDto {
   /** Amount to refund in cents. Omit to refund everything still refundable. */
   @IsOptional()
@@ -8,6 +13,7 @@ export class RefundDto {
   amountCents?: number;
 }
 
+/** The result of a refund: the new ledger row and where the charge stands. */
 export interface RefundView {
   /** The new refund row in the ledger. */
   refundId: string;
@@ -21,6 +27,7 @@ export interface RefundView {
   status: 'succeeded' | 'pending';
 }
 
+/** One ledger row as the API returns it. */
 export interface LedgerEntryView {
   id: string;
   type: 'charge' | 'failure' | 'refund';
@@ -34,6 +41,9 @@ export interface LedgerEntryView {
   createdAt: Date;
 }
 
+/**
+ * A subscription's ledger: every entry in order, plus totals of the money that actually moved.
+ */
 export interface LedgerView {
   subscriptionId: string;
   chargedCents: number;

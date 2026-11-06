@@ -1,7 +1,17 @@
+/**
+ * @file The subscription state machine: the complete table of legal status changes. Anything
+ * not in the table throws.
+ */
+
 import { InvalidTransitionError } from './errors';
 
+/**
+ * Where a subscription is in its life. It stays `pending_payment` until the first payment
+ * clears, and `canceled` is final.
+ */
 export type SubscriptionStatus = 'pending_payment' | 'active' | 'past_due' | 'paused' | 'canceled';
 
+/** Something that happened to a subscription and may change its status. */
 export type SubscriptionEvent =
   'PAYMENT_SUCCEEDED' | 'PAYMENT_FAILED' | 'PAUSE' | 'CANCEL' | 'RETRIES_EXHAUSTED';
 
@@ -51,10 +61,15 @@ const TRANSITIONS: Record<
   canceled: {},
 };
 
+/** Whether `event` is legal in status `from`, without applying it. */
 export function canTransition(from: SubscriptionStatus, event: SubscriptionEvent): boolean {
   return TRANSITIONS[from][event] !== undefined;
 }
 
+/**
+ * Applies `event` to `from` and returns the new status. Throws InvalidTransitionError if the
+ * table does not allow it.
+ */
 export function transition(from: SubscriptionStatus, event: SubscriptionEvent): SubscriptionStatus {
   const to = TRANSITIONS[from][event];
   if (to === undefined) {
@@ -63,6 +78,7 @@ export function transition(from: SubscriptionStatus, event: SubscriptionEvent): 
   return to;
 }
 
+/** True for a status that nothing can leave (only `canceled`). */
 export function isTerminal(status: SubscriptionStatus): boolean {
   return Object.keys(TRANSITIONS[status]).length === 0;
 }

@@ -1,3 +1,9 @@
+/**
+ * @file Process entry point. Validates the environment before anything else, so a misconfigured
+ * server exits at once with a readable list of problems, then starts the HTTP server with the
+ * raw request body preserved for webhook signature checks.
+ */
+
 import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';

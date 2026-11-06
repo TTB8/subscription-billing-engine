@@ -1,3 +1,7 @@
+/**
+ * @file The HTTP endpoint the payment provider calls.
+ */
+
 import {
   BadRequestException,
   Controller,
@@ -11,6 +15,10 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { WebhooksService } from './webhooks.service';
 
+/**
+ * Receives provider webhooks. Excluded from the public API docs because only the provider calls
+ * it.
+ */
 @ApiExcludeController()
 @Controller('webhooks')
 export class WebhooksController {

@@ -1,3 +1,7 @@
+/**
+ * @file Request and response shapes for plans.
+ */
+
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -13,6 +17,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+/** One prepaid term offered on a plan. */
 export class CreatePlanTermDto {
   /** Prepaid cycles in one payment. A single cycle is always available, so terms start at 2. */
   @IsInt()
@@ -27,6 +32,7 @@ export class CreatePlanTermDto {
   discountBps!: number;
 }
 
+/** Body of a plan creation request. */
 export class CreatePlanDto {
   @IsString()
   @IsNotEmpty()
@@ -57,6 +63,7 @@ export class CreatePlanDto {
   terms?: CreatePlanTermDto[];
 }
 
+/** One way to buy a plan, with its price worked out. */
 export interface PlanTermView {
   cycles: number;
   label: string;
@@ -66,6 +73,7 @@ export interface PlanTermView {
   totalCents: number;
 }
 
+/** A plan as customers see it, with every purchase option priced. */
 export interface PlanView {
   id: string;
   name: string;

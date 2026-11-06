@@ -1,8 +1,13 @@
+/**
+ * @file Customer-facing subscription routes: start, view, pause and cancel.
+ */
+
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CheckoutDto, CheckoutView, StopView, SubscriptionView } from './subscriptions.dto';
 import { SubscriptionsService } from './subscriptions.service';
 
+/** Checkout, subscription status, pause and cancel. */
 @ApiTags('subscriptions')
 @Controller('subscriptions')
 export class SubscriptionsController {

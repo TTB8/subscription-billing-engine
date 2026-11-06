@@ -1,3 +1,8 @@
+/**
+ * @file The renewal and dunning-retry job: finds subscriptions that are due and charges them
+ * off-session, recording results through the shared settlement.
+ */
+
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import {
@@ -17,6 +22,7 @@ import { PrismaService } from '../prisma/prisma.service';
 /** Subscriptions looked at per run. Anything beyond this waits for the next run. */
 const BATCH_SIZE = 200;
 
+/** What one run of the renewal job did, counted per outcome. */
 export interface RenewalSummary {
   /** Subscriptions that looked due when the run started. */
   examined: number;

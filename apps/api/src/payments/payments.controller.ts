@@ -1,9 +1,14 @@
+/**
+ * @file Admin routes for refunds and the per-subscription ledger.
+ */
+
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
 import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { AdminKeyGuard } from '../common/admin-key.guard';
 import { LedgerView, RefundDto, RefundView } from './payments.dto';
 import { PaymentsService } from './payments.service';
 
+/** Refund a charge and read a subscription's ledger. All routes require the admin key. */
 @ApiTags('payments')
 @Controller('admin')
 @UseGuards(AdminKeyGuard)

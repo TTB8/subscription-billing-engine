@@ -1,3 +1,7 @@
+/**
+ * @file The schedule that runs the renewal job.
+ */
+
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { APP_CONFIG, AppConfig } from '../config/env';

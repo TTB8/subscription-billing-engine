@@ -1,3 +1,8 @@
+/**
+ * @file Root module. Lists every feature module; the renewal schedule is only registered
+ * outside tests.
+ */
+
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CommonModule } from './common/common.module';
@@ -10,6 +15,7 @@ import { RenewalsModule } from './renewals/renewals.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 
+/** The billing API application. */
 @Module({
   imports: [
     CommonModule,

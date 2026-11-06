@@ -1,3 +1,9 @@
+/**
+ * @file Records a payment result in the ledger and applies its effect to the subscription. The
+ * decisions come from the pure domain rules; this file does the reading and writing, inside the
+ * caller's transaction and under a per-subscription lock.
+ */
+
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { chargeIdempotencyKey, settleFailure, settleSuccess } from '@billing/domain';
@@ -19,6 +25,7 @@ export interface PaymentOutcome {
   failureCode?: string;
 }
 
+/** What settling one payment did. */
 export type SettlementResult =
   /** Ledger row written and the subscription updated. */
   | 'applied'

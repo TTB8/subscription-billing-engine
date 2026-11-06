@@ -1,3 +1,8 @@
+/**
+ * @file Global HTTP behaviour shared by the real server and the e2e tests, so tests exercise
+ * exactly what production runs: strict request validation and the error mapping.
+ */
+
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { BillingExceptionFilter } from './common/billing-exception.filter';
 

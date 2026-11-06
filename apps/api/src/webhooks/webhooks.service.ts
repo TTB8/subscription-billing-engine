@@ -1,3 +1,7 @@
+/**
+ * @file Webhook processing: verification, deduplication and application of provider events.
+ */
+
 import { Inject, Injectable } from '@nestjs/common';
 import type { GatewayEvent, PaymentGateway } from '@billing/gateway';
 import { PaymentOutcome, SettlementResult, SettlementService } from '../billing/settlement.service';
@@ -5,6 +9,7 @@ import { Clock } from '../common/clock';
 import { PAYMENT_GATEWAY } from '../gateway/gateway.module';
 import { PrismaService } from '../prisma/prisma.service';
 
+/** What handling one webhook did. Every value is a success to the provider. */
 export type WebhookResult =
   | SettlementResult
   /** The provider event type is not one this system handles. */
@@ -31,6 +36,7 @@ function toOutcome(event: GatewayEvent): PaymentOutcome | null {
   };
 }
 
+/** Verifies, deduplicates and applies provider events. */
 @Injectable()
 export class WebhooksService {
   constructor(

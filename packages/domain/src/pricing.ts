@@ -1,6 +1,12 @@
+/**
+ * @file Prepaid term pricing: one payment for several cycles, with a single discount on the
+ * total.
+ */
+
 import { InvalidArgumentError } from './errors';
 import { assertCents, Cents, percentOfBps } from './money';
 
+/** What a term price depends on. */
 export interface TermPriceInput {
   /** Price of a single cycle. */
   priceCents: Cents;
@@ -10,9 +16,13 @@ export interface TermPriceInput {
   discountBps: number;
 }
 
+/** The price of a prepaid term, broken down so the discount is visible. */
 export interface TermPrice {
+  /** Single-cycle price times the number of cycles, before any discount. */
   grossCents: Cents;
+  /** The discount, rounded half up to a whole cent. */
   discountCents: Cents;
+  /** What the customer pays: gross minus discount. */
   totalCents: Cents;
 }
 

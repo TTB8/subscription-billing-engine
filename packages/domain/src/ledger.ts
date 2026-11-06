@@ -1,10 +1,16 @@
+/**
+ * @file Ledger arithmetic: summarizing what a subscription has actually paid.
+ */
+
 import { Cents } from './money';
 
+/** One ledger row reduced to what the totals need: what kind it is and how much it moved. */
 export interface LedgerEntry {
   type: 'charge' | 'failure' | 'refund';
   amountCents: Cents;
 }
 
+/** Money totals for one subscription, in cents. */
 export interface LedgerSummary {
   chargedCents: Cents;
   refundedCents: Cents;
