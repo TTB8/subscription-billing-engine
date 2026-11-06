@@ -1,0 +1,26 @@
+{
+  "name": "@billing/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NestJS billing API: checkout, renewals, dunning, refunds, Stripe webhooks.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"no tests yet\"",
+    "test:cov": "echo \"no tests yet\"",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:reset": "pnpm --filter @billing/domain build && prisma migrate reset --force",
+    "db:seed": "pnpm --filter @billing/domain build && prisma db seed"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@billing/domain": "workspace:*",
+    "@prisma/client": "6.19.3"
+  },
+  "devDependencies": {
+    "prisma": "6.19.3",
+    "tsx": "^4.19.0"
+  }
+}

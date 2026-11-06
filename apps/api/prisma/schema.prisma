@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Mirrors SubscriptionStatus in @billing/domain.
+enum SubscriptionStatus {
+  pending_payment
+  active
+  past_due
+  paused
+  canceled
+}
+
+enum LedgerType {
+  charge
+  failure
+  refund
+}
+
+// A pause or cancel scheduled for the end of the paid cycle.
+enum StopKind {
+  pause
+  cancel
+}
+
+model Plan {
+  id            String         @id @default(uuid()) @db.Uuid
+  name          String         @unique
+  /// Price of ONE cycle, in minor units.
+  priceCents    Int
+  currency      String         @default("usd") @db.VarChar(3)
+  /// Fixed cycle length in days. Not calendar months.
+  cycleDays     Int            @default(28)
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now()) @db.Timestamptz(3)
+  terms         PlanTerm[]
+  subscriptions Subscription[]
+}
+
+/// A prepaid term: pay `cycles` cycles up front at `discountBps` off.
+model PlanTerm {
+  id          String @id @default(uuid()) @db.Uuid
+  planId      String @db.Uuid
+  cycles      Int
+  /// Basis points: 1000 = 10%.
+  discountBps Int
+  /// Named by length, e.g. "12 weeks". Never months.
+  label       String
+  plan        Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, cycles])
+}
+
+model Customer {
+  id               String         @id @default(uuid()) @db.Uuid
+  email            String         @unique
+  stripeCustomerId String?        @unique
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  subscriptions    Subscription[]
+}
+
+model Subscription {
+  id               String             @id @default(uuid()) @db.Uuid
+  customerId       String             @db.Uuid
+  planId           String             @db.Uuid
+  /// Number of cycles prepaid per payment (1 = pay each cycle).
+  termCycles       Int                @default(1)
+  status           SubscriptionStatus @default(pending_payment)
+  /// First successful payment. Set once, never a calendar date.
+  anchorAt         DateTime?          @db.Timestamptz(3)
+  /// End of paid coverage.
+  paidThroughAt    DateTime?          @db.Timestamptz(3)
+  pendingStop      StopKind?
+  /// Failed attempts in the cycle currently being dunned.
+  failureCount     Int                @default(0)
+  /// Original due date of the cycle being dunned. Retries are anchored to it.
+  dueAt            DateTime?          @db.Timestamptz(3)
+  nextRetryAt      DateTime?          @db.Timestamptz(3)
+  /// Provider payment method used for off-session renewals.
+  paymentMethodRef String?
+  /// Optimistic lock: bump on every write.
+  version          Int                @default(0)
+  createdAt        DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime           @updatedAt @db.Timestamptz(3)
+
+  customer Customer  @relation(fields: [customerId], references: [id])
+  plan     Plan      @relation(fields: [planId], references: [id])
+  payments Payment[]
+
+  @@index([status, paidThroughAt])
+  @@index([status, nextRetryAt])
+}
+
+/// Append-only ledger. Rows are never updated or deleted.
+model Payment {
+  id             String     @id @default(uuid()) @db.Uuid
+  subscriptionId String     @db.Uuid
+  type           LedgerType
+  amountCents    Int
+  currency       String     @db.VarChar(3)
+  /// Start of the period this attempt pays for.
+  periodStart    DateTime?  @db.Timestamptz(3)
+  /// 1 for the renewal itself, 2.. for dunning retries.
+  attempt        Int        @default(1)
+  /// Derived from subscription + period + attempt; also sent to the provider.
+  idempotencyKey String     @unique
+  gatewayRef     String?    @unique
+  failureCode    String?
+  /// For refunds: the charge being reversed.
+  refundOfId     String?    @db.Uuid
+  createdAt      DateTime   @default(now()) @db.Timestamptz(3)
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id])
+  refundOf     Payment?     @relation("Refunds", fields: [refundOfId], references: [id])
+  refunds      Payment[]    @relation("Refunds")
+
+  @@unique([subscriptionId, periodStart, type, attempt])
+  @@index([subscriptionId, createdAt])
+  @@index([refundOfId])
+}
+
+/// Provider events already handled. Insert-or-skip makes redelivery harmless.
+model WebhookEvent {
+  eventId     String    @id
+  type        String
+  receivedAt  DateTime  @default(now()) @db.Timestamptz(3)
+  processedAt DateTime? @db.Timestamptz(3)
+}
