@@ -13,7 +13,7 @@ describe('Subscriptions (e2e)', () => {
   beforeEach(async () => {
     await resetDb(ctx.prisma);
     ctx.clock.current = new Date(START);
-    ctx.gateway.setOutage(false);
+    ctx.gateway.reset();
   });
 
   describe('POST /subscriptions/checkout', () => {

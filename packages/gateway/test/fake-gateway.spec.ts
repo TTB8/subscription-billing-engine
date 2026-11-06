@@ -100,6 +100,30 @@ describe('FakeGateway card outcomes', () => {
   });
 });
 
+describe('FakeGateway.reset', () => {
+  it('forgets charges, refunds, events, replay history, scripts and outages', async () => {
+    const gw = new FakeGateway();
+    const paid = await gw.chargeOffSession(charge());
+    await gw.refund({
+      gatewayRef: paid.status === 'succeeded' ? paid.gatewayRef : '',
+      amountCents: 100,
+      idempotencyKey: 'r1',
+    });
+    gw.script('pm_ok', [], { decline: 'card_declined' });
+    gw.setOutage(true);
+    gw.loseNextResponse();
+
+    gw.reset();
+
+    expect(gw.charges).toHaveLength(0);
+    expect(gw.refunds).toHaveLength(0);
+    expect(gw.takeEvents()).toHaveLength(0);
+    // The same key is a fresh request now, not a replay, and pm_ok is a good card again.
+    await expect(gw.chargeOffSession(charge())).resolves.toMatchObject({ status: 'succeeded' });
+    expect(gw.charges).toHaveLength(1);
+  });
+});
+
 describe('FakeGateway idempotency', () => {
   it('replays the first result and never charges twice for the same key', async () => {
     const gw = new FakeGateway();
@@ -149,7 +173,7 @@ describe('FakeGateway unknown outcomes', () => {
 
   it('does not double charge when the response is lost and the call is retried', async () => {
     const gw = new FakeGateway();
-    gw.loseNextChargeResponse();
+    gw.loseNextResponse();
     await expect(gw.chargeOffSession(charge())).rejects.toThrow(GatewayUnavailableError);
     expect(gw.successfulCharges()).toHaveLength(1); // the provider did charge
     const retry = await gw.chargeOffSession(charge());
@@ -166,6 +190,18 @@ describe('FakeGateway unknown outcomes', () => {
     await expect(gw.createCheckoutSession(checkoutInput())).rejects.toThrow(
       GatewayUnavailableError,
     );
+  });
+
+  it('does not refund twice when the refund response is lost and the call is retried', async () => {
+    const gw = new FakeGateway();
+    const paid = await gw.chargeOffSession(charge());
+    const gatewayRef = paid.status === 'succeeded' ? paid.gatewayRef : '';
+    gw.loseNextResponse();
+    const refund = { gatewayRef, amountCents: 1000, idempotencyKey: 'r1' };
+    await expect(gw.refund(refund)).rejects.toThrow(GatewayUnavailableError);
+    expect(gw.refunds).toHaveLength(1); // the provider did refund
+    await expect(gw.refund(refund)).resolves.toMatchObject({ status: 'succeeded' });
+    expect(gw.refunds).toHaveLength(1); // and the retry did not refund again
   });
 
   it('also blocks refunds during an outage', async () => {

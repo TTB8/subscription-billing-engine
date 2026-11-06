@@ -64,18 +64,28 @@ export class FakeGateway implements PaymentGateway {
   private readonly replay = new Map<string, { fingerprint: string; result: unknown }>();
   private sequence = 0;
   private outage = false;
-  private loseNextResponse = false;
+  private dropNextResponse = false;
 
   constructor(options: FakeGatewayOptions = {}) {
     this.webhookSecret = options.webhookSecret ?? 'whsec_fake';
     this.now = options.now ?? (() => new Date());
-    this.script('pm_ok', [], 'ok');
-    this.script('pm_declined', [], { decline: 'card_declined' });
-    this.script('pm_insufficient_funds', [], { decline: 'insufficient_funds' });
-    this.script('pm_fails_after_first', ['ok'], { decline: 'card_declined' });
+    this.installPresets();
   }
 
   // --- test controls ---------------------------------------------------------
+
+  /** Back to a clean slate between tests: no charges, refunds, events or replay history. */
+  reset(): void {
+    this.charges.length = 0;
+    this.refunds.length = 0;
+    this.events.length = 0;
+    this.sessions.clear();
+    this.replay.clear();
+    this.scripts.clear();
+    this.outage = false;
+    this.dropNextResponse = false;
+    this.installPresets();
+  }
 
   /** Queue outcomes for a payment method; `fallback` applies once the queue is empty. */
   script(paymentMethodRef: string, queue: Outcome[], fallback: Outcome = 'ok'): void {
@@ -88,12 +98,12 @@ export class FakeGateway implements PaymentGateway {
   }
 
   /**
-   * The next off-session charge is executed by the provider, but the response
-   * is lost: the caller sees GatewayUnavailableError. Retrying with the same
-   * idempotency key must replay that result instead of charging again.
+   * The next off-session charge or refund is executed by the provider, but the
+   * response is lost: the caller sees GatewayUnavailableError. Retrying with the
+   * same idempotency key must replay that result instead of doing it again.
    */
-  loseNextChargeResponse(): void {
-    this.loseNextResponse = true;
+  loseNextResponse(): void {
+    this.dropNextResponse = true;
   }
 
   /** The customer pays the hosted page. Returns the charge result and emits the webhook event. */
@@ -149,16 +159,13 @@ export class FakeGateway implements PaymentGateway {
   async chargeOffSession(input: OffSessionChargeInput): Promise<ChargeResult> {
     this.assertAvailable();
     const result = this.idempotent(input.idempotencyKey, { ...input }, () => this.runCharge(input));
-    if (this.loseNextResponse) {
-      this.loseNextResponse = false;
-      throw new GatewayUnavailableError('Connection reset before the response arrived');
-    }
+    this.dropResponseIfRequested();
     return result;
   }
 
   async refund(input: RefundInput): Promise<RefundResult> {
     this.assertAvailable();
-    return this.idempotent(input.idempotencyKey, { ...input }, () => {
+    const result = this.idempotent(input.idempotencyKey, { ...input }, () => {
       const charge = this.charges.find((c) => c.gatewayRef === input.gatewayRef);
       if (!charge || charge.status !== 'succeeded') {
         throw new GatewayError(`No successful charge ${input.gatewayRef} to refund`);
@@ -175,6 +182,8 @@ export class FakeGateway implements PaymentGateway {
       });
       return { refundRef, status: 'succeeded' as const };
     });
+    this.dropResponseIfRequested();
+    return result;
   }
 
   parseWebhook(payload: string | Buffer, signature: string): GatewayEvent | null {
@@ -248,6 +257,20 @@ export class FakeGateway implements PaymentGateway {
     const result = run();
     this.replay.set(key, { fingerprint, result });
     return result;
+  }
+
+  private installPresets(): void {
+    this.script('pm_ok', [], 'ok');
+    this.script('pm_declined', [], { decline: 'card_declined' });
+    this.script('pm_insufficient_funds', [], { decline: 'insufficient_funds' });
+    this.script('pm_fails_after_first', ['ok'], { decline: 'card_declined' });
+  }
+
+  private dropResponseIfRequested(): void {
+    if (this.dropNextResponse) {
+      this.dropNextResponse = false;
+      throw new GatewayUnavailableError('Connection reset before the response arrived');
+    }
   }
 
   private assertAvailable(): void {

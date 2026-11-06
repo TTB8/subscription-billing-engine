@@ -1,5 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter, Logger } from '@nestjs/common';
-import { DomainError, InvalidArgumentError, InvalidTransitionError } from '@billing/domain';
+import {
+  DomainError,
+  InvalidArgumentError,
+  InvalidTransitionError,
+  RefundError,
+} from '@billing/domain';
 import { GatewayError, GatewayUnavailableError } from '@billing/gateway';
 import type { Response } from 'express';
 
@@ -13,7 +18,7 @@ export class BillingExceptionFilter implements ExceptionFilter {
 
     let status = 400;
     let message = error.message;
-    if (error instanceof InvalidTransitionError) status = 409;
+    if (error instanceof InvalidTransitionError || error instanceof RefundError) status = 409;
     else if (error instanceof InvalidArgumentError) status = 400;
     else if (error instanceof GatewayUnavailableError) {
       status = 503;

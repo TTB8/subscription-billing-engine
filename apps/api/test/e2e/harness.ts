@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { FakeGateway } from '@billing/gateway';
-import { Plan, Prisma, Subscription } from '@prisma/client';
+import { Payment, Plan, Prisma, Subscription } from '@prisma/client';
 import { AppModule } from '../../src/app.module';
 import { Clock } from '../../src/common/clock';
 import { PAYMENT_GATEWAY } from '../../src/gateway/gateway.module';
@@ -90,5 +90,62 @@ export async function makeSubscription(
   });
   return prisma.subscription.create({
     data: { customerId: customer.id, planId, ...over },
+  });
+}
+
+/**
+ * Records a successful charge the way the webhook handler will: the provider
+ * really charged (so it can be refunded) and a ledger row points at it.
+ */
+export async function recordCharge(
+  ctx: TestContext,
+  subscriptionId: string,
+  over: { amountCents?: number; periodStart?: Date; createdAt?: Date } = {},
+): Promise<Payment> {
+  const amountCents = over.amountCents ?? 4900;
+  const periodStart = over.periodStart ?? START;
+  const idempotencyKey = `test-charge:${subscriptionId}:${periodStart.toISOString()}`;
+  const result = await ctx.gateway.chargeOffSession({
+    customerRef: 'cus_test',
+    paymentMethodRef: 'pm_ok',
+    amountCents,
+    currency: 'usd',
+    description: 'test charge',
+    metadata: { subscriptionId, periodStart: periodStart.toISOString(), attempt: 1 },
+    idempotencyKey,
+  });
+  if (result.status !== 'succeeded') throw new Error('test charge was declined');
+  return ctx.prisma.payment.create({
+    data: {
+      subscriptionId,
+      type: 'charge',
+      amountCents,
+      currency: 'usd',
+      periodStart,
+      attempt: 1,
+      idempotencyKey,
+      gatewayRef: result.gatewayRef,
+      ...(over.createdAt ? { createdAt: over.createdAt } : {}),
+    },
+  });
+}
+
+export function recordFailure(
+  prisma: PrismaService,
+  subscriptionId: string,
+  over: { createdAt?: Date } = {},
+): Promise<Payment> {
+  return prisma.payment.create({
+    data: {
+      subscriptionId,
+      type: 'failure',
+      amountCents: 4900,
+      currency: 'usd',
+      periodStart: START,
+      attempt: 1,
+      idempotencyKey: `test-failure:${subscriptionId}`,
+      failureCode: 'card_declined',
+      ...(over.createdAt ? { createdAt: over.createdAt } : {}),
+    },
   });
 }

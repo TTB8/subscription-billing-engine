@@ -1,5 +1,10 @@
 import { ArgumentsHost } from '@nestjs/common';
-import { DomainError, InvalidArgumentError, InvalidTransitionError } from '@billing/domain';
+import {
+  DomainError,
+  InvalidArgumentError,
+  InvalidTransitionError,
+  RefundError,
+} from '@billing/domain';
 import { GatewayError, GatewayUnavailableError } from '@billing/gateway';
 import { BillingExceptionFilter } from '../../src/common/billing-exception.filter';
 
@@ -23,6 +28,10 @@ describe('BillingExceptionFilter', () => {
       error: 'InvalidTransitionError',
       message: expect.stringContaining('canceled'),
     });
+  });
+
+  it('maps a refund the ledger does not allow to 409', () => {
+    expect(run(new RefundError('already fully refunded')).status).toBe(409);
   });
 
   it('maps an invalid argument to 400', () => {
