@@ -44,7 +44,7 @@ jobs:
       TEST_DATABASE_URL: postgresql://billing:billing@localhost:5432/billing_test
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The pnpm version comes from "packageManager" in package.json.
       - uses: pnpm/action-setup@v4
