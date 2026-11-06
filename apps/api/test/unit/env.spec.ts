@@ -30,7 +30,14 @@ describe('loadConfig', () => {
       stripeSecretKey: 'sk_test_abc123',
       stripeWebhookSecret: 'whsec_abc123',
       adminApiKey: base.ADMIN_API_KEY,
+      renewalJobEnabled: true,
     });
+  });
+
+  it('lets the renewal job be switched off', () => {
+    expect(loadConfig({ ...base, RENEWAL_JOB_ENABLED: 'false' }).renewalJobEnabled).toBe(false);
+    expect(loadConfig({ ...base, RENEWAL_JOB_ENABLED: 'true' }).renewalJobEnabled).toBe(true);
+    expect(messageOf({ ...base, RENEWAL_JOB_ENABLED: 'maybe' })).toContain('RENEWAL_JOB_ENABLED');
   });
 
   it('coerces PORT from a string', () => {

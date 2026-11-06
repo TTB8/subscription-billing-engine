@@ -11,6 +11,7 @@ const schema = z
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     ADMIN_API_KEY: z.string().optional(),
+    RENEWAL_JOB_ENABLED: z.stringbool().default(true),
   })
   .superRefine((env, ctx) => {
     const fail = (path: string, message: string) =>
@@ -42,6 +43,8 @@ export interface AppConfig {
   stripeWebhookSecret: string | undefined;
   /** Undefined means every admin request is rejected. */
   adminApiKey: string | undefined;
+  /** Set to false on replicas that should serve the API but not run the renewal schedule. */
+  renewalJobEnabled: boolean;
 }
 
 export class ConfigError extends Error {
@@ -73,5 +76,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     stripeSecretKey: e.STRIPE_SECRET_KEY,
     stripeWebhookSecret: e.STRIPE_WEBHOOK_SECRET,
     adminApiKey: e.ADMIN_API_KEY,
+    renewalJobEnabled: e.RENEWAL_JOB_ENABLED,
   };
 }
