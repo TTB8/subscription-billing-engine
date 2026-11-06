@@ -27,6 +27,7 @@ function toView(sub: SubscriptionWithPlan): SubscriptionView {
     anchorAt: sub.anchorAt,
     paidThroughAt: sub.paidThroughAt,
     pendingStop: sub.pendingStop,
+    nextRetryAt: sub.nextRetryAt,
     createdAt: sub.createdAt,
   };
 }

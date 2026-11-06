@@ -39,6 +39,8 @@ export interface SubscriptionView {
   paidThroughAt: Date | null;
   /** A pause or cancel waiting for the end of the paid cycle. */
   pendingStop: 'pause' | 'cancel' | null;
+  /** While past_due: when the next payment attempt will be made. */
+  nextRetryAt: Date | null;
   createdAt: Date;
 }
 
