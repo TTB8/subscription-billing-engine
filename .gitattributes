@@ -1,0 +1,4 @@
+# Normalize line endings so contributors on Windows and Linux get identical files.
+* text=auto eol=lf
+*.sh text eol=lf
+pnpm-lock.yaml -diff

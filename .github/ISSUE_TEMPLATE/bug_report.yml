@@ -1,0 +1,30 @@
+name: Bug report
+description: Something behaves differently from what the docs or the decision records describe
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, and what you saw.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: If a rule in docs/decisions or the README describes the behaviour, link it.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Requests, a failing test, or a ledger excerpt. Never paste real keys or card data.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Node version, operating system, and whether you used the fake gateway or Stripe test mode.
