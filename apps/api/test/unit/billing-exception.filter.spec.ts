@@ -5,7 +5,7 @@ import {
   InvalidTransitionError,
   RefundError,
 } from '@billing/domain';
-import { GatewayError, GatewayUnavailableError } from '@billing/gateway';
+import { GatewayError, GatewayUnavailableError, InvalidSignatureError } from '@billing/gateway';
 import { BillingExceptionFilter } from '../../src/common/billing-exception.filter';
 
 function run(error: DomainError | GatewayError) {
@@ -40,6 +40,12 @@ describe('BillingExceptionFilter', () => {
 
   it('maps any other domain error to 400', () => {
     expect(run(new DomainError('rule broken')).status).toBe(400);
+  });
+
+  it('maps a bad webhook signature to 400', () => {
+    const { status, body } = run(new InvalidSignatureError());
+    expect(status).toBe(400);
+    expect(body.message).toBe('Invalid webhook signature');
   });
 
   it('maps an unreachable provider to 503 without leaking details', () => {

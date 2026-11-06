@@ -6,6 +6,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { PlansModule } from './plans/plans.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     PlansModule,
     SubscriptionsModule,
     PaymentsModule,
+    WebhooksModule,
   ],
   controllers: [HealthController],
 })

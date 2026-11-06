@@ -1,6 +1,6 @@
 import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Payment } from '@prisma/client';
-import { resolveRefund, summarizeLedger } from '@billing/domain';
+import { refundIdempotencyKey, resolveRefund, summarizeLedger } from '@billing/domain';
 import { GatewayError, PaymentGateway } from '@billing/gateway';
 import { PAYMENT_GATEWAY } from '../gateway/gateway.module';
 import { PrismaService } from '../prisma/prisma.service';
@@ -61,7 +61,7 @@ export class PaymentsService {
           requestedCents: dto.amountCents,
         });
 
-        const idempotencyKey = `refund:${charge.id}:${earlier.length + 1}`;
+        const idempotencyKey = refundIdempotencyKey(charge.id, earlier.length + 1);
         const result = await this.gateway.refund({
           gatewayRef: charge.gatewayRef,
           amountCents,

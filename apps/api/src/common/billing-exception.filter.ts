@@ -5,7 +5,7 @@ import {
   InvalidTransitionError,
   RefundError,
 } from '@billing/domain';
-import { GatewayError, GatewayUnavailableError } from '@billing/gateway';
+import { GatewayError, GatewayUnavailableError, InvalidSignatureError } from '@billing/gateway';
 import type { Response } from 'express';
 
 /** Maps domain and gateway errors to HTTP. Provider details are logged, never returned. */
@@ -20,7 +20,10 @@ export class BillingExceptionFilter implements ExceptionFilter {
     let message = error.message;
     if (error instanceof InvalidTransitionError || error instanceof RefundError) status = 409;
     else if (error instanceof InvalidArgumentError) status = 400;
-    else if (error instanceof GatewayUnavailableError) {
+    else if (error instanceof InvalidSignatureError) {
+      status = 400;
+      message = 'Invalid webhook signature';
+    } else if (error instanceof GatewayUnavailableError) {
       status = 503;
       message = 'Payment provider unavailable, retry shortly';
       this.logger.warn(error.message);

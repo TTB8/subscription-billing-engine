@@ -1,6 +1,8 @@
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { FakeGateway } from '@billing/gateway';
+import { chargeIdempotencyKey } from '@billing/domain';
+import { FakeGateway, GatewayEvent } from '@billing/gateway';
+import request from 'supertest';
 import { Payment, Plan, Prisma, Subscription } from '@prisma/client';
 import { AppModule } from '../../src/app.module';
 import { Clock } from '../../src/common/clock';
@@ -32,9 +34,13 @@ export interface TestContext {
 
 export async function createTestApp(): Promise<TestContext> {
   const clock = new TestClock();
+  // The fake reads the test clock so event timestamps are controlled by the test.
+  const gateway = new FakeGateway({ webhookSecret: 'whsec_e2e', now: () => clock.now() });
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(Clock)
     .useValue(clock)
+    .overrideProvider(PAYMENT_GATEWAY)
+    .useValue(gateway)
     .compile();
   const app = moduleRef.createNestApplication({ rawBody: true });
   setupApp(app);
@@ -42,7 +48,7 @@ export async function createTestApp(): Promise<TestContext> {
   return {
     app,
     prisma: app.get(PrismaService),
-    gateway: app.get<FakeGateway>(PAYMENT_GATEWAY),
+    gateway,
     clock,
   };
 }
@@ -149,3 +155,51 @@ export function recordFailure(
     },
   });
 }
+
+/**
+ * Makes the provider charge a card and returns the webhook event it would send.
+ * `dueAt` is the due date the charge is for (the previous paid-through date).
+ */
+export async function chargeEvent(
+  ctx: TestContext,
+  o: {
+    subscriptionId: string;
+    dueAt: Date;
+    attempt?: number;
+    at?: Date;
+    amountCents?: number;
+    paymentMethodRef?: string;
+    /** Override to simulate a second, different payment for the same operation. */
+    idempotencyKey?: string;
+  },
+): Promise<GatewayEvent> {
+  if (o.at) ctx.clock.current = new Date(o.at);
+  const attempt = o.attempt ?? 1;
+  ctx.gateway.takeEvents();
+  await ctx.gateway.chargeOffSession({
+    customerRef: 'cus_test',
+    paymentMethodRef: o.paymentMethodRef ?? 'pm_ok',
+    amountCents: o.amountCents ?? 4900,
+    currency: 'usd',
+    description: 'renewal',
+    metadata: { subscriptionId: o.subscriptionId, periodStart: o.dueAt.toISOString(), attempt },
+    idempotencyKey:
+      o.idempotencyKey ?? chargeIdempotencyKey(o.subscriptionId, o.dueAt.toISOString(), attempt),
+  });
+  const [event] = ctx.gateway.takeEvents();
+  if (!event) throw new Error('the fake gateway emitted no event');
+  return event;
+}
+
+/** POSTs an event to the webhook endpoint, signed the way the provider signs it. */
+export function deliver(ctx: TestContext, event: GatewayEvent) {
+  const { payload, signature } = ctx.gateway.sign(event);
+  return request(ctx.app.getHttpServer())
+    .post('/webhooks/stripe')
+    .set('stripe-signature', signature)
+    .set('content-type', 'application/json')
+    .send(payload);
+}
+
+export const daysAfter = (date: Date, days: number): Date =>
+  new Date(date.getTime() + days * 86_400_000);
