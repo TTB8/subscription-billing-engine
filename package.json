@@ -12,9 +12,14 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
-    "test:cov": "pnpm -r test:cov"
+    "typecheck": "pnpm build:packages && pnpm -r typecheck",
+    "test": "pnpm build:packages && pnpm -r test",
+    "test:cov": "pnpm build:packages && pnpm -r test:cov",
+    "build:packages": "pnpm -r --filter './packages/*' build",
+    "build": "pnpm build:packages && pnpm --filter @billing/api build",
+    "test:e2e": "pnpm build:packages && pnpm --filter @billing/api test:e2e",
+    "dev": "pnpm --filter @billing/api dev",
+    "db:reset": "pnpm --filter @billing/api db:reset"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

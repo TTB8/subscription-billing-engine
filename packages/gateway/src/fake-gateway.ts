@@ -82,7 +82,7 @@ export class FakeGateway implements PaymentGateway {
     this.scripts.set(paymentMethodRef, { queue: [...queue], fallback });
   }
 
-  /** While true, charges and refunds throw GatewayUnavailableError (unknown outcome). */
+  /** While true, every gateway call throws GatewayUnavailableError (unknown outcome). */
   setOutage(on: boolean): void {
     this.outage = on;
   }
@@ -131,12 +131,14 @@ export class FakeGateway implements PaymentGateway {
   // --- PaymentGateway --------------------------------------------------------
 
   async ensureCustomer(input: { email: string; idempotencyKey: string }) {
+    this.assertAvailable();
     return this.idempotent(input.idempotencyKey, { email: input.email }, () => ({
       customerRef: this.nextId('cus'),
     }));
   }
 
   async createCheckoutSession(input: CheckoutInput) {
+    this.assertAvailable();
     return this.idempotent(input.idempotencyKey, { ...input }, () => {
       const sessionRef = this.nextId('cs');
       this.sessions.set(sessionRef, { input, completed: false });

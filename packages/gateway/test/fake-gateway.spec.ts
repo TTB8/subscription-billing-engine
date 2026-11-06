@@ -157,6 +157,17 @@ describe('FakeGateway unknown outcomes', () => {
     expect(gw.successfulCharges()).toHaveLength(1); // and the retry did not charge again
   });
 
+  it('also blocks customer and checkout calls during an outage', async () => {
+    const gw = new FakeGateway();
+    gw.setOutage(true);
+    await expect(
+      gw.ensureCustomer({ email: 'a@example.test', idempotencyKey: 'c1' }),
+    ).rejects.toThrow(GatewayUnavailableError);
+    await expect(gw.createCheckoutSession(checkoutInput())).rejects.toThrow(
+      GatewayUnavailableError,
+    );
+  });
+
   it('also blocks refunds during an outage', async () => {
     const gw = new FakeGateway();
     const paid = await gw.chargeOffSession(charge());
