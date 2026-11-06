@@ -14,6 +14,11 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
+    // Standalone ES module scripts (tooling), run directly by Node.
+    files: ['**/*.mjs'],
+    languageOptions: { globals: globals.node },
+  },
+  {
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     },
