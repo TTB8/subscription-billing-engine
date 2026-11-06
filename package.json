@@ -19,7 +19,8 @@
     "build": "pnpm build:packages && pnpm --filter @billing/api build",
     "test:e2e": "pnpm build:packages && pnpm --filter @billing/api test:e2e",
     "dev": "pnpm --filter @billing/api dev",
-    "db:reset": "pnpm --filter @billing/api db:reset"
+    "db:reset": "pnpm --filter @billing/api db:reset",
+    "test:cov:api": "pnpm build:packages && pnpm --filter @billing/api test:cov:full"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

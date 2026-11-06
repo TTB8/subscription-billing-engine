@@ -15,7 +15,7 @@
     "dev": "pnpm --dir ../.. build:packages && nest start --watch",
     "start": "node dist/main.js",
     "test:e2e": "jest --config jest.e2e.config.js --runInBand",
-    "test:e2e:cov": "jest --config jest.e2e.config.js --runInBand --coverage"
+    "test:cov:full": "jest --config jest.cov.config.js --runInBand"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
